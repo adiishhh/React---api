@@ -2,6 +2,7 @@ import { Modal, Table, Input, Button, Select } from "antd";
 import { useState } from "react";
 import PropTypes from "prop-types";
 
+
 Purchase.propTypes = {
     categories: PropTypes.arrayOf(
         PropTypes.shape({
@@ -9,13 +10,21 @@ Purchase.propTypes = {
             name: PropTypes.string.isRequired,
         })
     ).isRequired,
+    onAddPurchase: PropTypes.func.isRequired, // Add this line
+    vendor: PropTypes.arrayOf(
+    PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        name: PropTypes.string.isRequired,
+    })
+    ).isRequired, // Add this line
 };
 
-function Purchase({  categories = [] }) {
+
+function Purchase({ categories = [], onAddPurchase, vendor = [] }) { // Correct destructuring
     const [addModal, setAddModal] = useState(false);
     const [updateModal, setUpdateModal] = useState(false);
     const [data, setData] = useState([]); 
-    const [formData, setFormData] = useState({ product: '', name: '', price: '' }); 
+    const [formData, setFormData] = useState({ product: '',name: '',vendor: '',unit: '', price: '' }); 
     const [editingIndex, setEditingIndex] = useState(null); 
 
     const columns = [
@@ -35,6 +44,16 @@ function Purchase({  categories = [] }) {
             dataIndex: "name",
         },
         {
+            title: "Vendor",
+            key: "vendor",
+            dataIndex: "vendor",
+        },
+        {
+            title: "Unit",
+            key: "unit",
+            dataIndex: "unit",
+        },
+        {
             title: "Price",
             key: "price",
             dataIndex: "price",
@@ -52,8 +71,10 @@ function Purchase({  categories = [] }) {
     ];
 
     const handleCreate = () => {
-        setData([...data, { ...formData, id: data.length + 1 }]);
-        setFormData({ product: '', name: '', price: '' });
+        const newPurchase = { ...formData, id: data.length + 1 };
+        setData([...data, newPurchase]);
+        onAddPurchase(newPurchase); // Notify the parent about the new purchase
+        setFormData({ product: '', name: '', vendor: '', unit: '', price: '' });
         setAddModal(false);
     };
 
@@ -67,8 +88,9 @@ function Purchase({  categories = [] }) {
         const updatedData = [...data];
         updatedData[editingIndex] = { ...formData, id: editingIndex + 1 }; 
         setData(updatedData);
+        onAddPurchase(updatedData[editingIndex]); // Notify the parent about the updated purchase
         setUpdateModal(false);
-        setFormData({ product: '', name: '', price: '' });
+        setFormData({ product: '', name: '',vendor: '',unit: '', price: '' });
     };
 
     const handleDelete = (index) => {
@@ -105,6 +127,24 @@ function Purchase({  categories = [] }) {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     style={{ marginBottom: '10px' }}
                 />
+                <Select
+                    placeholder="Select Vendor"
+                    value={formData.vendor}
+                    onChange={(value) => setFormData({ ...formData, vendor: value })}
+                    style={{ width: '100%', marginBottom: '10px' }}
+                >
+                    {vendor.map(vendor => (
+                        <Select.Option key={vendor.id} value={vendor.name}>
+                            {vendor.name}
+                        </Select.Option>
+                    ))}
+                </Select>
+                <Input
+                    placeholder="Unit"
+                    value={formData.unit}
+                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                    style={{ marginBottom: '10px' }}
+                />
                 <Input
                     placeholder="Price"
                     value={formData.price}
@@ -136,6 +176,24 @@ function Purchase({  categories = [] }) {
                     placeholder="Name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    style={{ marginBottom: '10px' }}
+                />
+                <Select
+                    placeholder="Select Vendor"
+                    value={formData.vendor}
+                    onChange={(value) => setFormData({ ...formData, vendor: value })}
+                    style={{ width: '100%', marginBottom: '10px' }}
+                >
+                    {vendor.map(vendor => (
+                        <Select.Option key={vendor.id} value={vendor.name}>
+                            {vendor.name}
+                        </Select.Option>
+                    ))}
+                </Select>
+                <Input
+                    placeholder="Unit"
+                    value={formData.unit}
+                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                     style={{ marginBottom: '10px' }}
                 />
                 <Input

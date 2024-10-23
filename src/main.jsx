@@ -8,6 +8,8 @@ import VendorPage from './pages/VendorPage.jsx';
 import EmployeePage from './pages/EmployeePage.jsx';
 import CategoryPage from './pages/CategoryPage.jsx';
 import PurchasePage from './pages/PurchasePage.jsx';
+import StockPage from './pages/StockPage.jsx';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 
 const router = createBrowserRouter([
@@ -35,13 +37,22 @@ const router = createBrowserRouter([
         path: '/purchase',
         element: <PurchasePage/>
       },
+      {
+        path: '/stock',
+        element: <StockPage/>
+      },
     ]  
   },
  
 ]);
 
+const querClient = new QueryClient()
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+    <QueryClientProvider client={querClient}>
+
     <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>,
 );
