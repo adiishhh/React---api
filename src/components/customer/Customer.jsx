@@ -2,18 +2,24 @@ import { useQuery } from "@tanstack/react-query";
 import { Modal, Table, Input, Button, Form, message } from "antd";
 import { useState } from "react";
 import { getCustomer } from "../../utils/customer/CustomerApi";
-import { useCreateCustomer } from "../../utils/customer/CustomerHook";
+import { useCreateCustomer, useDeleteCustomer, useUpdateCustomer } from "../../utils/customer/CustomerHook";
+import { FaEdit } from "react-icons/fa";
+import { MdDelete } from "react-icons/md";
 
 function Customer() {
     const [addModal, setAddModal] = useState(false);
     const [updateModal, setUpdateModal] = useState(false);
+    const [updateId, setUpdateId] = useState()
     const {data, refetch} = useQuery({
         queryKey: ['getCustomer'],
         queryFn: getCustomer,
     })
     const [form] = Form.useForm()
+    const [updateForm] = Form.useForm()
 
     const {mutate:Create} = useCreateCustomer()
+    const {mutate:update} = useUpdateCustomer()
+    const {mutate:Delete} = useDeleteCustomer()
 
 console.log({data});
 
@@ -50,8 +56,14 @@ console.log({data});
             key: "actions",
             render: (record) => (
                 <>
-                    {/* <Button onClick={() => handleEdit(index)}>Edit</Button>
-                    <Button onClick={() => handleDelete(index)}>Delete</Button> */}
+                 <div className="flex space-x-4">
+                    <button onClick={()=>{
+                        setUpdateId(record.id)
+                        openUpdateModal(record)
+                    }}><FaEdit /></button>
+                    <button onClick={() => 
+                        handleDelete(record.id)}><MdDelete /></button>
+                 </div>
                 </>
             ),
         },
@@ -93,10 +105,54 @@ console.log({data});
             },
             onError: (error) => {
                 console.log(error);
-                message.error("Failed");
+                message.error("error");
             }
         });
     };
+
+    const openUpdateModal = (values)=>{
+        updateForm.setFieldsValue({
+            name:values.name,
+            phone:values.phone,
+            email:values.email,
+            place:values.place,
+
+        })
+        setUpdateModal(true)
+    }
+
+    const handleUpdate = (values) => {
+        console.log(values);
+
+        const id = updateId
+        console.log(id);
+        
+
+        update({data:values,id:id},{
+            onSuccess(){
+                setUpdateModal(false)
+                refetch()
+                message.success('success')
+            },
+            onError: (error) => {
+                console.log(error);
+                message.error("error");
+            }
+        })
+        
+    }
+
+    const handleDelete = (id) => {
+        Delete(id, {
+            onSuccess(){
+                message.success('deleted')
+                refetch()
+            },
+            onError(){
+                message.error('failed')
+            }
+        })
+    }
 
     return (
         <div>
@@ -107,7 +163,7 @@ console.log({data});
                 footer={null}
                 open={addModal}
                 onCancel={() => setAddModal(false)}
-                title='Create New Customer'
+                title='Create Customer'
             >
                 <Form layout="vertical" onFinish={onFinish} form={form}>
                     <Form.Item name={'name'} label='NAME' rules={[{required: true,message:'Enter name'}]}>
@@ -146,38 +202,47 @@ console.log({data});
                 
             </Modal>
 
-            {/* <Modal
+            <Modal
                 footer={null}
                 open={updateModal}
                 onCancel={() => setUpdateModal(false)}
+                title = 'Update Customer'
             >
-                <h3>Edit Customer</h3>
+                  <Form layout="vertical" onFinish={handleUpdate} form={updateForm}>
+                    <Form.Item name={'name'} label='NAME' rules={[{required: true,message:'Enter name'}]}>
+
                 <Input
                     placeholder="Name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
+                    </Form.Item>
+                    <Form.Item name={'phone'} label='phone' rules={[{required: true,message:'Enter phone'}]}>
+
                 <Input
                     placeholder="Phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
+                    </Form.Item>
+                    <Form.Item name={'email'} label='email' rules={[{required: true,message:'Enter email'}]}>
+
                 <Input
                     placeholder="Email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
+                    </Form.Item>
+                    <Form.Item name={'place'} label='place' rules={[{required: true,message:'Enter place'}]}>
+
                 <Input
                     placeholder="Place"
-                    value={formData.place}
-                    onChange={(e) => setFormData({ ...formData, place: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
-                <Button>Update</Button>
-            </Modal> */}
+                    </Form.Item>
+                <Form.Item>
+
+                <Button className="w-full" htmlType="submit">Update</Button>
+                </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 }
