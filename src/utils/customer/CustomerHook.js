@@ -6,14 +6,15 @@ export const useCreateCustomer = () =>{
         mutationFn:createCustomer
     })
 }
+export const useUpdateCustomer = () => {
+    return useMutation({
+        mutationFn: ({ data, id }) => updateCustomer(data, id)
+    });
+};
 export const useDeleteCustomer = () =>{
     return useMutation({
         mutationFn:deleteCustomer
     })
 }
 
-export const useUpdateCustomer = () => {
-    return useMutation({
-        mutationFn: ({ data, id }) => updateCustomer(data, id), // Destructure the parameters
-    });
-};
+

@@ -1,12 +1,25 @@
-import { Modal, Table, Input, Button } from "antd";
+import { useQuery } from "@tanstack/react-query";
+import { Modal, Table, Input, Button, message, Form } from "antd";
 import { useState } from "react";
+import { getVendor } from "../../utils/vendor/VendorApi";
+import { useCreateVendor, useDeleteVendor, useUpdateVendor } from "../../utils/vendor/VendorHook";
+import { FaEdit } from "react-icons/fa";
+import { MdDelete } from "react-icons/md";
 
 function Vendor() {
     const [addModal, setAddModal] = useState(false);
     const [updateModal, setUpdateModal] = useState(false);
-    const [data, setData] = useState([]); 
-    const [formData, setFormData] = useState({ name: '', phone: '', email: '' }); 
-    const [editingIndex, setEditingIndex] = useState(null); 
+    const [updateId, setUpdateId] = useState()
+    const {data, refetch} = useQuery({
+        queryKey:['getVendor'],
+        queryFn: getVendor
+    })
+    const [form] = Form.useForm()
+    const [updateForm] = Form.useForm()
+
+    const {mutate:Create} = useCreateVendor()
+    const {mutate:Update} = useUpdateVendor()
+    const {mutate:Delete} = useDeleteVendor()
 
     const columns = [
         {
@@ -32,97 +45,152 @@ function Vendor() {
         {
             title: "Actions",
             key: "actions",
-            render: (_, record, index) => (
+            render: (record) => (
                 <>
-                    <Button onClick={() => handleEdit(index)}>Edit</Button>
-                    <Button onClick={() => handleDelete(index)}>Delete</Button>
+                                     <div className="flex space-x-4">
+                    <button onClick={()=>{
+                        setUpdateId(record.id)
+                        openUpdateModal(record)
+                    }}><FaEdit /></button>
+                    <button onClick={() => 
+                        handleDelete(record.id)}><MdDelete /></button>
+                 </div>
                 </>
             ),
         },
     ];
 
-    const handleCreate = () => {
-        setData([...data, { ...formData, id: data.length + 1 }]);
-        setFormData({ name: '', phone: '', email: '' });
-        setAddModal(false);
+    const onFinish = (values) => {
+        console.log(values);
+        Create(values, {
+            onSuccess: () => {
+                message.success("Success");
+                setAddModal(false);
+                form.resetFields()
+                refetch();
+            },
+            onError: (error) => {
+                console.log(error);
+                message.error("error");
+            }
+        });
     };
 
-    const handleEdit = (index) => {
-        setEditingIndex(index);
-        setFormData(data[index]);
-        setUpdateModal(true);
-    };
+    const openUpdateModal = (values)=>{
+        updateForm.setFieldsValue({
+            name:values.name,
+            phone:values.phone,
+            email:values.email,
+        })
+        setUpdateModal(true)
+    }
 
-    const handleUpdate = () => {
-        const updatedData = [...data];
-        updatedData[editingIndex] = { ...formData, id: editingIndex + 1 }; 
-        setData(updatedData);
-        setUpdateModal(false);
-        setFormData({ name: '', phone: '', email: '' });
-    };
+    const handleUpdate = (values) => {
+        console.log(values);
 
-    const handleDelete = (index) => {
-        const updatedData = data.filter((_, i) => i !== index);
-        setData(updatedData);
-    };
+        const id = updateId
+        console.log(id);
+        
+
+        Update({data:values,id:id},{
+            onSuccess(){
+                setUpdateModal(false)
+                refetch()
+                message.success('success')
+            },
+            onError: (error) => {
+                console.log(error);
+                message.error("error");
+            }
+        })
+        
+    }
+
+    const handleDelete = (id) => {
+        Delete(id, {
+            onSuccess(){
+                message.success('deleted')
+                refetch()
+            },
+            onError(){
+                message.error('failed')
+            }
+        })
+    }  
 
     return (
         <div>
             <Button onClick={() => setAddModal(true)}>Create</Button>
-            <Table columns={columns} dataSource={data} rowKey="id" />
+            <Table columns={columns} dataSource={data?.data} />
 
             <Modal
                 footer={null}
                 open={addModal}
                 onCancel={() => setAddModal(false)}
+                title='Create Vendor'
             >
-                <h3 style={{ marginBottom: '10px' }}>Create New Vendor</h3>
+                <Form layout="vertical" onFinish={onFinish} form={form}>
+                    <Form.Item name={'name'} label='NAME' rules={[{required: true,message:'Enter name'}]}>
+
                 <Input
                     placeholder="Name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
+                    </Form.Item>
+                    <Form.Item name={'phone'} label='phone' rules={[{required: true,message:'Enter phone'}]}>
+
                 <Input
                     placeholder="Phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
+                    </Form.Item>
+                    <Form.Item name={'email'} label='email' rules={[{required: true,message:'Enter email'}]}>
+
                 <Input
                     placeholder="Email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
-                <Button onClick={handleCreate}>Submit</Button>
+                    </Form.Item>
+                <Form.Item>
+                <Button className="w-full" htmlType="submit">Submit</Button>
+                </Form.Item>
+                </Form>
+                
             </Modal>
 
             <Modal
                 footer={null}
                 open={updateModal}
                 onCancel={() => setUpdateModal(false)}
+                title = 'Update Vendor'
             >
-                <h3 style={{ marginBottom: '10px' }}>Edit Vendor</h3>
+                  <Form layout="vertical" onFinish={handleUpdate} form={updateForm}>
+                    <Form.Item name={'name'} label='NAME' rules={[{required: true,message:'Enter name'}]}>
+
                 <Input
                     placeholder="Name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
+                    </Form.Item>
+                    <Form.Item name={'phone'} label='phone' rules={[{required: true,message:'Enter phone'}]}>
+
                 <Input
                     placeholder="Phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
+                    </Form.Item>
+                    <Form.Item name={'email'} label='email' rules={[{required: true,message:'Enter email'}]}>
+
                 <Input
                     placeholder="Email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
-                <Button onClick={handleUpdate}>Update</Button>
+                    </Form.Item>
+
+                <Form.Item>
+                <Button className="w-full" htmlType="submit">Update</Button>
+                </Form.Item>
+                </Form>
             </Modal>
         </div>
     );

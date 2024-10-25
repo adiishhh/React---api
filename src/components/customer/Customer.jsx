@@ -195,7 +195,6 @@ console.log({data});
                 />
                     </Form.Item>
                 <Form.Item>
-
                 <Button className="w-full" htmlType="submit">Submit</Button>
                 </Form.Item>
                 </Form>
@@ -238,7 +237,6 @@ console.log({data});
                 />
                     </Form.Item>
                 <Form.Item>
-
                 <Button className="w-full" htmlType="submit">Update</Button>
                 </Form.Item>
                 </Form>

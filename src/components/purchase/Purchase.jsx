@@ -1,31 +1,44 @@
-import { Modal, Table, Input, Button, Select } from "antd";
+import { Modal, Table, Input, Button, Select, Form, message } from "antd";
 import { useState } from "react";
-import PropTypes from "prop-types";
+// import PropTypes from "prop-types";
+import { getPurchase } from "../../utils/purchase/PurchaseApi";
+import { useCreatePurchase, useDeletePurchase, useUpdatePurchase } from "../../utils/purchase/PurchaseHook";
+import { FaEdit } from "react-icons/fa";
+import { MdDelete } from "react-icons/md";
+import { useQuery } from "@tanstack/react-query";
+import { getCategory } from "../../utils/category/CategoryApi";
+import { getVendor } from "../../utils/vendor/VendorApi";
 
 
-Purchase.propTypes = {
-    categories: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.number.isRequired,
-            name: PropTypes.string.isRequired,
-        })
-    ).isRequired,
-    onAddPurchase: PropTypes.func.isRequired, // Add this line
-    vendor: PropTypes.arrayOf(
-    PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        name: PropTypes.string.isRequired,
-    })
-    ).isRequired, // Add this line
-};
 
-
-function Purchase({ categories = [], onAddPurchase, vendor = [] }) { // Correct destructuring
+function Purchase() {
     const [addModal, setAddModal] = useState(false);
     const [updateModal, setUpdateModal] = useState(false);
-    const [data, setData] = useState([]); 
-    const [formData, setFormData] = useState({ product: '',name: '',vendor: '',unit: '', price: '' }); 
-    const [editingIndex, setEditingIndex] = useState(null); 
+    const [updateId, setUpdateId] = useState()
+    const { Option } = Select; 
+    const { data, refetch } = useQuery({
+        queryKey: ['getPurchase'],
+        queryFn: getPurchase,
+    });
+    
+    const { data: categoriesData } = useQuery({
+        queryKey: ['getCategory'],
+        queryFn: getCategory,
+    });
+    
+    const { data: vendorsData } = useQuery({
+        queryKey: ['getVendor'],
+        queryFn: getVendor,
+    });
+
+    const [form] = Form.useForm()
+    const [updateForm] = Form.useForm()
+
+    const {mutate:Create} = useCreatePurchase()
+    const {mutate:Update} = useUpdatePurchase()
+    const {mutate:Delete} = useDeletePurchase()
+
+
 
     const columns = [
         {
@@ -61,150 +74,181 @@ function Purchase({ categories = [], onAddPurchase, vendor = [] }) { // Correct 
         {
             title: "Actions",
             key: "actions",
-            render: (_, record, index) => (
+            render: (record) => (
                 <>
-                    <Button onClick={() => handleEdit(index)}>Edit</Button>
-                    <Button onClick={() => handleDelete(index)}>Delete</Button>
+                    <div className="flex space-x-4">
+                    <button onClick={()=>{
+                        setUpdateId(record.id)
+                        openUpdateModal(record)
+                    }}><FaEdit /></button>
+                    <button onClick={() => 
+                        handleDelete(record.id)}><MdDelete /></button>
+                    </div>
                 </>
             ),
         },
     ];
 
-    const handleCreate = () => {
-        const newPurchase = { ...formData, id: data.length + 1 };
-        setData([...data, newPurchase]);
-        onAddPurchase(newPurchase); // Notify the parent about the new purchase
-        setFormData({ product: '', name: '', vendor: '', unit: '', price: '' });
-        setAddModal(false);
+    const onFinish = (values) => {
+        console.log(values);
+        Create(values, {
+            onSuccess: () => {
+                message.success('Success');
+                setAddModal(false);
+                form.resetFields();
+                refetch()
+            },
+            onError: (error) => {
+                console.log(error);
+                message.error('Error');
+            }
+        });
     };
+    const openUpdateModal = (values)=>{
+        updateForm.setFieldsValue({
+            product:values.product,
+            name:values.name,
+            vendor:values.vendor,
+            unit:values.unit,
+            price:values.price,
 
-    const handleEdit = (index) => {
-        setEditingIndex(index);
-        setFormData(data[index]); 
-        setUpdateModal(true);
-    };
+        })
+        setUpdateModal(true)
+    }
+    const handleUpdate = (values) => {
+        const id = updateId
+        console.log(values);
+        console.log(id);
 
-    const handleUpdate = () => {
-        const updatedData = [...data];
-        updatedData[editingIndex] = { ...formData, id: editingIndex + 1 }; 
-        setData(updatedData);
-        onAddPurchase(updatedData[editingIndex]); // Notify the parent about the updated purchase
-        setUpdateModal(false);
-        setFormData({ product: '', name: '',vendor: '',unit: '', price: '' });
-    };
+        
 
-    const handleDelete = (index) => {
-        const updatedData = data.filter((_, i) => i !== index);
-        setData(updatedData);
-    };
+        Update({data:values,id:id},{
+            onSuccess(){
+                setUpdateModal(false)
+                refetch()
+                message.success('success')
+            },
+            onError: (error) => {
+                console.log(error);
+                message.error("error");
+            }
+        })
+        
+    }    
+    const handleDelete = (id) => {
+        Delete(id, {
+            onSuccess(){
+                message.success('deleted')
+                refetch()
+            },
+            onError(){
+                message.error('failed')
+            }
+        })
+    }
 
     return (
         <div>
             <Button onClick={() => setAddModal(true)}>Create</Button>
-            <Table columns={columns} dataSource={data} rowKey="id" />
+            <Table columns={columns} dataSource={data?.data} />
 
             <Modal
                 footer={null}
                 open={addModal}
                 onCancel={() => setAddModal(false)}
+                title = 'Create Purchase'
             >
-                <h3>Create New Purchase</h3>
-                <Select
-                    placeholder="Select Product"
-                    value={formData.product}
-                    onChange={(value) => setFormData({ ...formData, product: value })}
-                    style={{ width: '100%', marginBottom: '10px' }}
-                >
-                    {categories.map(category => (
-                        <Select.Option key={category.id} value={category.name}>
-                            {category.name}
-                        </Select.Option>
+                <Form layout="vertical" onFinish={onFinish} form={form}>
+                <Form.Item name={'product'} label='Product' rules={[{ required: true, message: 'Select product' }]}>
+                    <Select placeholder="Select a product">
+                    {categoriesData?.data?.map(category => (
+                    <Option key={category.id} value={category.name}>{category.name}</Option>
                     ))}
-                </Select>
+                    </Select>
+                    </Form.Item>
+                    <Form.Item name={'name'} label='NAME' rules={[{required: true,message:'Enter name'}]}>
+
                 <Input
                     placeholder="Name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
-                <Select
-                    placeholder="Select Vendor"
-                    value={formData.vendor}
-                    onChange={(value) => setFormData({ ...formData, vendor: value })}
-                    style={{ width: '100%', marginBottom: '10px' }}
-                >
-                    {vendor.map(vendor => (
-                        <Select.Option key={vendor.id} value={vendor.name}>
-                            {vendor.name}
-                        </Select.Option>
-                    ))}
-                </Select>
+                    </Form.Item>
+                    <Form.Item name={'vendor'} label='Vendor' rules={[{ required: true, message: 'Select vendor' }]}>
+                        <Select placeholder="Select a vendor">
+                        {vendorsData?.data?.map(vendor => (
+                        <Option key={vendor.id} value={vendor.name}>{vendor.name}</Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item name={'unit'} label='unit' rules={[{required: true,message:'Enter unit'}]}>
+
                 <Input
                     placeholder="Unit"
-                    value={formData.unit}
-                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
+                    </Form.Item>
+                    <Form.Item name={'price'} label='price' rules={[{required: true,message:'Enter price'}]}>
+
                 <Input
                     placeholder="Price"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+                   
                 />
-                <Button onClick={handleCreate}>Submit</Button>
+                    </Form.Item>
+                <Form.Item>
+                <Button className="w-full" htmlType="submit">Submit</Button>
+                </Form.Item>
+                </Form>
             </Modal>
 
             <Modal
                 footer={null}
                 open={updateModal}
                 onCancel={() => setUpdateModal(false)}
+                title = 'Update Employee'
             >
-                <h3>Edit Purchase</h3>
-                <Select
-                    placeholder="Select Product"
-                    value={formData.product}
-                    onChange={(value) => setFormData({ ...formData, product: value })}
-                    style={{ width: '100%', marginBottom: '10px' }}
-                >
-                    {categories.map(category => (
-                        <Select.Option key={category.id} value={category.name}>
-                            {category.name}
-                        </Select.Option>
-                    ))}
-                </Select>
+                <Form layout="vertical" onFinish={handleUpdate} form={updateForm}>
+                <Form.Item name={'product'} label='product' rules={[{required: true,message:'Select product'}]}>
+
+                <Input
+                    placeholder="Product"
+
+                />
+                    </Form.Item>
+                    <Form.Item name={'name'} label='NAME' rules={[{required: true,message:'Enter name'}]}>
+
                 <Input
                     placeholder="Name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+
                 />
-                <Select
-                    placeholder="Select Vendor"
-                    value={formData.vendor}
-                    onChange={(value) => setFormData({ ...formData, vendor: value })}
-                    style={{ width: '100%', marginBottom: '10px' }}
-                >
-                    {vendor.map(vendor => (
-                        <Select.Option key={vendor.id} value={vendor.name}>
-                            {vendor.name}
-                        </Select.Option>
-                    ))}
-                </Select>
+                    </Form.Item>
+                    <Form.Item name={'vendor'} label='vendor' rules={[{required: true,message:'Select vendor'}]}>
+
+                <Input
+                    placeholder="Vendor"
+
+                />
+                    </Form.Item>
+                    <Form.Item name={'unit'} label='unit' rules={[{required: true,message:'Enter unit'}]}>
+
                 <Input
                     placeholder="Unit"
-                    value={formData.unit}
-                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+
                 />
+                    </Form.Item>
+                    <Form.Item name={'price'} label='price' rules={[{required: true,message:'Enter price'}]}>
+
                 <Input
                     placeholder="Price"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    style={{ marginBottom: '10px' }}
+
                 />
-                <Button onClick={handleUpdate}>Update</Button>
-                </Modal>
-                </div>
+                    </Form.Item>
+                <Form.Item>
+
+                <Button className="w-full" htmlType="submit">Update</Button>
+                </Form.Item>
+                </Form>
+            </Modal>
+        </div>
     );
 }
 export default Purchase;
