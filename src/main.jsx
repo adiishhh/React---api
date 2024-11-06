@@ -10,6 +10,9 @@ import CategoryPage from './pages/CategoryPage.jsx';
 import PurchasePage from './pages/PurchasePage.jsx';
 import StockPage from './pages/StockPage.jsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import ProductPage from './pages/ProductPage.jsx';
+import SalesPage from './pages/SalesPage.jsx';
+import SaleItemPage from './pages/SaleItemPage.jsx';
 
 
 const router = createBrowserRouter([
@@ -34,12 +37,24 @@ const router = createBrowserRouter([
         element: <CategoryPage/>
       },
       {
+        path: '/product',
+        element: <ProductPage/>
+      },
+      {
         path: '/purchase',
         element: <PurchasePage/>
       },
       {
         path: '/stock',
         element: <StockPage/>
+      },
+      {
+        path: '/sales',
+        element: <SalesPage/>
+      },
+      {
+        path: '/saleItem',
+        element: <SaleItemPage/>
       },
     ]  
   },

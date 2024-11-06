@@ -25,11 +25,20 @@ function App() {
                     <Menu.Item key="4" onClick={() => window.location.href = '/category'}>
                         Category
                     </Menu.Item>
-                    <Menu.Item key="5" onClick={() => window.location.href = '/purchase'}>
+                    <Menu.Item key="5" onClick={() => window.location.href = '/product'}>
+                        Product
+                    </Menu.Item>
+                    <Menu.Item key="6" onClick={() => window.location.href = '/purchase'}>
                         Purchase
                     </Menu.Item>
-                    <Menu.Item key="6" onClick={() => window.location.href = '/stock'}>
+                    <Menu.Item key="7" onClick={() => window.location.href = '/stock'}>
                         Stock
+                    </Menu.Item>
+                    <Menu.Item key="8" onClick={() => window.location.href = '/sales'}>
+                        Sales
+                    </Menu.Item>
+                    <Menu.Item key="9" onClick={() => window.location.href = '/saleItem'}>
+                        Sale Item
                     </Menu.Item>
                 </Menu>
             </Sider>

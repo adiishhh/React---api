@@ -6,8 +6,8 @@ import { useCreatePurchase, useDeletePurchase, useUpdatePurchase } from "../../u
 import { FaEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import { useQuery } from "@tanstack/react-query";
-import { getCategory } from "../../utils/category/CategoryApi";
 import { getVendor } from "../../utils/vendor/VendorApi";
+import { getProduct } from "../../utils/product/ProductApi";
 
 
 
@@ -21,9 +21,9 @@ function Purchase() {
         queryFn: getPurchase,
     });
     
-    const { data: categoriesData } = useQuery({
-        queryKey: ['getCategory'],
-        queryFn: getCategory,
+    const { data: productData } = useQuery({
+        queryKey: ['getProduct'],
+        queryFn: getProduct,
     });
     
     const { data: vendorsData } = useQuery({
@@ -38,6 +38,16 @@ function Purchase() {
     const {mutate:Update} = useUpdatePurchase()
     const {mutate:Delete} = useDeletePurchase()
 
+    const purchaseDataWithNames = data?.data?.map(purchase => {
+        const vendor = vendorsData?.data?.find(vendor => vendor.id === purchase.vendor);
+        const product = productData?.data?.find(product => product.id === purchase.product);
+        return {
+            ...purchase,
+            vendorName: vendor ? vendor.name : 'N/A', // Set vendor name based on vendor data
+            productName: product ? product.name : 'N/A', // Set product name based on product data
+        };
+    });
+
 
 
     const columns = [
@@ -47,48 +57,54 @@ function Purchase() {
             dataIndex: "id",
         },
         {
-            title: "Product",
-            key: "product",
-            dataIndex: "product",
+            title: "Bill Number",
+            key: "bill",
+            dataIndex: "bill",
         },
         {
-            title: "Name",
-            key: "name",
-            dataIndex: "name",
+            title: "Product",
+            key: "product",
+            render: (text, record) => record.productName || 'N/A',  // Use the mapped product name
         },
         {
             title: "Vendor",
             key: "vendor",
-            dataIndex: "vendor",
+            render: (text, record) => record.vendorName || 'N/A',  // Use the mapped vendor name
         },
         {
-            title: "Unit",
-            key: "unit",
-            dataIndex: "unit",
+            title: "Quantity",
+            key: "quantity",
+            dataIndex: "quantity",
         },
         {
-            title: "Price",
-            key: "price",
-            dataIndex: "price",
+            title: "Buy Price",
+            key: "buy",
+            dataIndex: "buy",
+        },
+        {
+            title: "Type",
+            key: "type",
+            dataIndex: "type",
+        },
+        {
+            title: "Sell Price",
+            key: "sell",
+            dataIndex: "sell",
         },
         {
             title: "Actions",
             key: "actions",
             render: (record) => (
-                <>
-                    <div className="flex space-x-4">
-                    <button onClick={()=>{
-                        setUpdateId(record.id)
-                        openUpdateModal(record)
+                <div className="flex space-x-4">
+                    <button onClick={() => {
+                        setUpdateId(record.id);
+                        openUpdateModal(record);
                     }}><FaEdit /></button>
-                    <button onClick={() => 
-                        handleDelete(record.id)}><MdDelete /></button>
-                    </div>
-                </>
+                    <button onClick={() => handleDelete(record.id)}><MdDelete /></button>
+                </div>
             ),
         },
     ];
-
     const onFinish = (values) => {
         console.log(values);
         Create(values, {
@@ -104,37 +120,34 @@ function Purchase() {
             }
         });
     };
-    const openUpdateModal = (values)=>{
+    const openUpdateModal = (values) => {
         updateForm.setFieldsValue({
-            product:values.product,
-            name:values.name,
-            vendor:values.vendor,
-            unit:values.unit,
-            price:values.price,
-
-        })
-        setUpdateModal(true)
-    }
+            bill: values.bill,
+            product: values.product,
+            vendor: values.vendor, // Ensure this is the ID, not the name
+            quantity: values.quantity,
+            buy: values.buy,
+            type: values.type,
+            sell: values.sell,
+        });
+        setUpdateModal(true);
+    };
     const handleUpdate = (values) => {
-        const id = updateId
-        console.log(values);
-        console.log(id);
-
-        
-
-        Update({data:values,id:id},{
-            onSuccess(){
-                setUpdateModal(false)
-                refetch()
-                message.success('success')
+        console.log("Update values:", values); // Log the values to check
+        const id = updateId;
+    
+        Update({ data: values, id: id }, {
+            onSuccess() {
+                setUpdateModal(false);
+                refetch();
+                message.success('success');
             },
             onError: (error) => {
                 console.log(error);
                 message.error("error");
             }
-        })
-        
-    }    
+        });
+    }; 
     const handleDelete = (id) => {
         Delete(id, {
             onSuccess(){
@@ -150,7 +163,7 @@ function Purchase() {
     return (
         <div>
             <Button onClick={() => setAddModal(true)}>Create</Button>
-            <Table columns={columns} dataSource={data?.data} />
+            <Table columns={columns} dataSource={purchaseDataWithNames} />
 
             <Modal
                 footer={null}
@@ -159,41 +172,54 @@ function Purchase() {
                 title = 'Create Purchase'
             >
                 <Form layout="vertical" onFinish={onFinish} form={form}>
+                <Form.Item name={'bill'} label='Bill' rules={[{required: true,message:'Enter bill number'}]}>
+
+                <Input
+                    placeholder="Bill Number"
+   
+                />
+                </Form.Item>                   
                 <Form.Item name={'product'} label='Product' rules={[{ required: true, message: 'Select product' }]}>
-                    <Select placeholder="Select a product">
-                    {categoriesData?.data?.map(category => (
-                    <Option key={category.id} value={category.name}>{category.name}</Option>
-                    ))}
-                    </Select>
-                    </Form.Item>
-                    <Form.Item name={'name'} label='NAME' rules={[{required: true,message:'Enter name'}]}>
+    <Select 
+        placeholder="Select a product"
+        onChange={(value) => {
+            const selectedProduct = productData?.data?.find(product => product.id === value);
+            if (selectedProduct) {
+                form.setFieldsValue({ sell: selectedProduct.price }); // Set the sell price based on selected product
+            }
+        }}
+    >
+        {productData?.data?.map(product => (
+            <Option key={product.id} value={product.id}>{product.name}</Option>
+        ))}
+    </Select>
+</Form.Item>
+<Form.Item name={'vendor'} label='Vendor' rules={[{ required: true, message: 'Select vendor' }]}>
+    <Select placeholder="Select a vendor">
+        {vendorsData?.data?.map(vendor => (
+            <Option key={vendor.id} value={vendor.id}>{vendor.name}</Option> // Use vendor.id as value
+        ))}
+    </Select>
+</Form.Item>
+                    <Form.Item name={'quantity'} label='quantity' rules={[{required: true,message:'Enter quantity'}]}>
 
                 <Input
-                    placeholder="Name"
+                    placeholder="Quantity"
                    
                 />
                     </Form.Item>
-                    <Form.Item name={'vendor'} label='Vendor' rules={[{ required: true, message: 'Select vendor' }]}>
-                        <Select placeholder="Select a vendor">
-                        {vendorsData?.data?.map(vendor => (
-                        <Option key={vendor.id} value={vendor.name}>{vendor.name}</Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-                    <Form.Item name={'unit'} label='unit' rules={[{required: true,message:'Enter unit'}]}>
-
-                <Input
-                    placeholder="Unit"
-                   
-                />
-                    </Form.Item>
-                    <Form.Item name={'price'} label='price' rules={[{required: true,message:'Enter price'}]}>
-
-                <Input
-                    placeholder="Price"
-                   
-                />
-                    </Form.Item>
+                    <Form.Item name={'buy'} label='Buy Price' rules={[{ required: true, message: 'Enter buy price' }]}>
+    <Input placeholder="Buy Price" />
+</Form.Item>
+                    <Form.Item name={'type'} label='Type' rules={[{ required: true, message: 'Select type' }]}>
+    <Select placeholder='Select Type'>
+        <Option value="Cash">Cash</Option>
+        <Option value="Online">Online</Option>
+    </Select>
+</Form.Item>
+                    <Form.Item name={'sell'} label='Sell Price' rules={[{ required: true, message: 'Enter sell price' }]}>
+    <Input placeholder="Sell Price" />
+</Form.Item>
                 <Form.Item>
                 <Button className="w-full" htmlType="submit">Submit</Button>
                 </Form.Item>
@@ -204,44 +230,57 @@ function Purchase() {
                 footer={null}
                 open={updateModal}
                 onCancel={() => setUpdateModal(false)}
-                title = 'Update Employee'
+                title = 'Update Purchase'
             >
                 <Form layout="vertical" onFinish={handleUpdate} form={updateForm}>
-                <Form.Item name={'product'} label='product' rules={[{required: true,message:'Select product'}]}>
+                <Form.Item name={'bill'} label='Bill' rules={[{ required: true, message: 'Enter bill number' }]}>
+            <Input placeholder="Bill Number" />
+        </Form.Item>
+        <Form.Item name={'product'} label='Product' rules={[{ required: true, message: 'Select product' }]}>
+            <Select 
+                placeholder="Select a product"
+                onChange={(value) => {
+                    const selectedProduct = productData?.data?.find(product => product.id === value);
+                    if (selectedProduct) {
+                        updateForm.setFieldsValue({ sell: selectedProduct.price }); // Set the sell price based on selected product
+                    }
+                }}
+            >
+                {productData?.data?.map(product => (
+                    <Option key={product.id} value={product.id}>{product.name}</Option>
+                ))}
+            </Select>
+        </Form.Item>
+        <Form.Item name={'vendor'} label='Vendor' rules={[{ required: true, message: 'Select vendor' }]}>
+            <Select placeholder="Select a vendor">
+                {vendorsData?.data?.map(vendor => (
+                    <Option key={vendor.id} value={vendor.id}>{vendor.name}</Option> // Use vendor.id as value
+                ))}
+            </Select>
+        </Form.Item>
+                    <Form.Item name={'quantity'} label='quantity' rules={[{required: true,message:'Enter quantity'}]}>
 
                 <Input
-                    placeholder="Product"
-
+                    placeholder="Quantity"
+                   
                 />
                     </Form.Item>
-                    <Form.Item name={'name'} label='NAME' rules={[{required: true,message:'Enter name'}]}>
+                    <Form.Item name={'buy'} label='Buy Price' rules={[{required: true,message:'Enter buy price'}]}>
 
                 <Input
-                    placeholder="Name"
-
+                    placeholder="Buy Price"
+                   
                 />
                     </Form.Item>
-                    <Form.Item name={'vendor'} label='vendor' rules={[{required: true,message:'Select vendor'}]}>
-
-                <Input
-                    placeholder="Vendor"
-
-                />
-                    </Form.Item>
-                    <Form.Item name={'unit'} label='unit' rules={[{required: true,message:'Enter unit'}]}>
-
-                <Input
-                    placeholder="Unit"
-
-                />
-                    </Form.Item>
-                    <Form.Item name={'price'} label='price' rules={[{required: true,message:'Enter price'}]}>
-
-                <Input
-                    placeholder="Price"
-
-                />
-                    </Form.Item>
+                    <Form.Item name={'type'} label='Type' rules={[{ required: true, message: 'Select type' }]}>
+    <Select placeholder='Select Type'>
+        <Option value="Cash">Cash</Option>
+        <Option value="Online">Online</Option>
+    </Select>
+</Form.Item>
+                    <Form.Item name={'sell'} label='Sell Price' rules={[{ required: true, message: 'Enter sell price' }]}>
+    <Input placeholder="Sell Price" />
+</Form.Item>
                 <Form.Item>
 
                 <Button className="w-full" htmlType="submit">Update</Button>
