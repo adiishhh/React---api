@@ -105,16 +105,16 @@ function Sales() {
             quantity: values.quantity,
         };
     
-        console.log("Sale Data:", saleData); // Log the sale data
+        console.log("Sale Data:", saleData); 
         Create(saleData, {
             onSuccess: () => {
-                message.success('Sale created successfully');
+                message.success('Success');
                 refetch();
                 setAddModal(false);
                 form.resetFields();
             },
             onError: () => {
-                message.error('Error creating sale. Please try again.');
+                message.error('Error');
             },
         });
     };
@@ -137,19 +137,23 @@ function Sales() {
             await Update({ data: values, id: id });
             setUpdateModal(false);
             refetch();
-            message.success('Updated successfully');
+            message.success('Updated');
         } catch (error) {
             console.log(error);
-            message.error("Error updating");
+            message.error("Error");
         }
     };
 
+
+    
+
+
     const handleDelete = (id) => {
-        console.log("Deleting ID:", id); // Log the ID being deleted
-        Delete(id, {
+        console.log("Deleting ID:", id);
+        Delete(id, {  
             onSuccess() {
                 message.success('Deleted');
-                refetch();
+                refetch();  
             },
             onError(error) {
                 message.error('Failed');
@@ -157,6 +161,10 @@ function Sales() {
             }
         });
     };
+
+    
+
+    
 
     return (
         <div>

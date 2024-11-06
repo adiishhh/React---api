@@ -9,13 +9,13 @@ function SaleItem() {
         onSuccess: (data) => console.log("Sales Data:", data),
     });
 
-    // Map sales data to include product and quantity
+   
     const saleItemData = Array.isArray(salesData) ? salesData.map(sale => ({
         id: sale.id,
         customerName: sale.customerName,
         employeeName: sale.employeeName,
-        productName: sale.productName, // Ensure this references the correct field
-        quantity: sale.quantity, // Ensure this references the correct field
+        productName: sale.productName, 
+        quantity: sale.quantity,
     })) : [];
 
     const columns = [

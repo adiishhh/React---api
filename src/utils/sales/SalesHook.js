@@ -10,7 +10,5 @@ export const useUpdateSales = () => {
 };
 
 export const useDeleteSales = () => {
-    const mutation = useMutation(deleteSales);
-    console.log("Delete mutation:", mutation); // Log the mutation object
-    return mutation;
+    return useMutation(deleteSales);
 };
