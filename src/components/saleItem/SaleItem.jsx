@@ -1,27 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
 import { Table, Button } from "antd";
-import { getSales } from "../../utils/sales/SalesApi";
+import { getSaleItems } from "../../utils/SaleItem/SaleItemApi";
+
 
 function SaleItem() {
-    const { data: salesData, refetch } = useQuery({
-        queryKey: ['getSales'],
-        queryFn: getSales,
-        onSuccess: (data) => console.log("Sales Data:", data),
+    const { data: saleItemsData, refetch } = useQuery({
+        queryKey: ['getSaleItems'],
+        queryFn: getSaleItems,
+        onSuccess: (data) => {
+            console.log("Sale Items Data:", data); // Log the entire response
+        },
     });
 
-   
-    const saleItemData = Array.isArray(salesData) ? salesData.map(sale => ({
-        id: sale.id,
-        customerName: sale.customerName,
-        employeeName: sale.employeeName,
-        productName: sale.productName, 
-        quantity: sale.quantity,
+    // Map the sale items data to extract the needed fields
+    const saleItemData = Array.isArray(saleItemsData?.data) ? saleItemsData.data.map(item => ({
+        id: item.id,
+        customerName: item.customerName,
+        employeeName: item.employeeName,
+        productName: item.productName,
+        quantity: item.quantity,
     })) : [];
 
     const columns = [
         {
             title: 'Sale Info',
-            key: 'saleInfo',
+            key: 'sales_form',
             render: (text, record) => (
                 <span>
                     {record.customerName} - {record.employeeName}

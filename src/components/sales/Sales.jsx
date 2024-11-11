@@ -1,13 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import { Button, Form, Input, message, Modal, Select, Table } from "antd";
 import { useState } from "react";
-import { getSales } from "../../utils/sales/SalesApi";
-import { getCustomer } from "../../utils/customer/CustomerApi";
-import { getEmployee } from "../../utils/employee/EmployeeApi";
 import { useCreateSales, useDeleteSales, useUpdateSales } from "../../utils/sales/SalesHook";
 import { FaEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
+import { useQuery } from "@tanstack/react-query";
+import { getSales } from "../../utils/sales/SalesApi";
+import { getCustomer } from "../../utils/customer/CustomerApi";
+import { getEmployee } from "../../utils/employee/EmployeeApi";
 import { getProduct } from "../../utils/product/ProductApi";
+
 
 function Sales() {
     const [addModal, setAddModal] = useState(false);
@@ -17,8 +18,13 @@ function Sales() {
 
     const { data: salesData, refetch } = useQuery({
         queryKey: ['getSales'],
-        queryFn: getSales,
-    });
+        queryFn: async () => {
+            const response = await getSales();
+            console.log("Sales Data Response:", response); // Log the entire response
+            return response.data; // Ensure this is the correct path to your data
+        },
+    })
+    
 
     const { data: customerData } = useQuery({
         queryKey: ['getCustomer'],
@@ -38,9 +44,11 @@ function Sales() {
     const [form] = Form.useForm();
     const [updateForm] = Form.useForm();
 
-    const { mutate: Create } = useCreateSales();
-    const { mutate: Update } = useUpdateSales();
-    const { mutate: Delete } = useDeleteSales();
+    const {mutate:Create} = useCreateSales()
+    const {mutate:Update} = useUpdateSales()
+    const {mutate:Delete} = useDeleteSales()
+
+
 
     const salesDataWithNames = Array.isArray(salesData) ? salesData.map(sales => {
         const customer = customerData?.data?.find(customer => customer.id === sales.customer);
@@ -96,29 +104,35 @@ function Sales() {
     ];
 
     const onFinish = (values) => {
+        const selectedProduct = productData?.data?.find(product => product.id === values.product);
+        if (!selectedProduct) {
+            message.error('Selected product does not exist.');
+            return;
+        }
+    
         const saleData = {
             customer: values.customer,
             employee: values.employee,
             total_amount: values.total_amount,
             type: values.type,
-            product: values.product,
-            quantity: values.quantity,
+            product: values.product,  // This should be the product ID
+            quantity: values.quantity,  // This should be the quantity
         };
     
-        console.log("Sale Data:", saleData); 
+        console.log("Sale Data:", saleData); // Log the sale data
         Create(saleData, {
             onSuccess: () => {
-                message.success('Success');
+                message.success('Sale created successfully');
                 refetch();
                 setAddModal(false);
                 form.resetFields();
             },
-            onError: () => {
-                message.error('Error');
-            },
+            onError: (error) => {
+                console.log("Error response:", error.response.data);  // Log the error response
+                message.error('Error creating sale. Please try again.');
+            }
         });
     };
-
     const openUpdateModal = (values) => {
         updateForm.setFieldsValue({
             customer: values.customer,
