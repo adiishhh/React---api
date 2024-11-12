@@ -163,7 +163,7 @@ function Purchase() {
     return (
         <div>
             <Button onClick={() => setAddModal(true)}>Create</Button>
-            <Table columns={columns} dataSource={purchaseDataWithNames} />
+            <Table columns={columns} dataSource={purchaseDataWithNames} pagination={{ pageSize: 6 }}/>
 
             <Modal
                 footer={null}

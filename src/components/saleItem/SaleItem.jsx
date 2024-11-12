@@ -46,7 +46,7 @@ function SaleItem() {
     return (
         <div>
             <Button onClick={refetch}>Refresh</Button>
-            <Table columns={columns} dataSource={saleItemData} rowKey="id" />
+            <Table columns={columns} dataSource={saleItemData} pagination={{ pageSize: 6 }} rowKey="id" />
         </div>
     );
 }

@@ -183,7 +183,7 @@ function Sales() {
     return (
         <div>
             <Button onClick={() => setAddModal(true)}>Create</Button>
-            <Table columns={columns} dataSource={salesDataWithNames} />
+            <Table columns={columns} dataSource={salesDataWithNames}  pagination={{ pageSize: 6 }} />
 
             <Modal
                 footer={null}

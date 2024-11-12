@@ -157,7 +157,7 @@ console.log({data});
     return (
         <div>
             <Button onClick={() => setAddModal(true)}>Create</Button>
-            <Table columns={columns} dataSource={data?.data} />
+            <Table columns={columns} dataSource={data?.data} pagination={{ pageSize: 6 }}/>
 
             <Modal
                 footer={null}

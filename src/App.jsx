@@ -40,6 +40,12 @@ function App() {
                     <Menu.Item key="9" onClick={() => window.location.href = '/saleItem'}>
                         Sale Item
                     </Menu.Item>
+                    <Menu.Item key="10" onClick={() => window.location.href = '/expense'}>
+                        Expense
+                    </Menu.Item>
+                    <Menu.Item key="11" onClick={() => window.location.href = '/accounts'}>
+                        Accounts
+                    </Menu.Item>
                 </Menu>
             </Sider>
             <Layout>

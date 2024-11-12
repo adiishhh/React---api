@@ -136,7 +136,7 @@ function Stock() {
     return (
         <div>
             <Button onClick={() => setAddModal(true)}>Create</Button>
-            <Table columns={columns} dataSource={stockDataWithNames} />
+            <Table columns={columns} dataSource={stockDataWithNames} pagination={{ pageSize: 6 }} />
 
             <Modal
                 footer={null}

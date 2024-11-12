@@ -13,6 +13,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ProductPage from './pages/ProductPage.jsx';
 import SalesPage from './pages/SalesPage.jsx';
 import SaleItemPage from './pages/SaleItemPage.jsx';
+import ExpensePage from './pages/ExpensePage.jsx';
+import AccountsPage from './pages/AccountsPage.jsx';
 
 
 const router = createBrowserRouter([
@@ -55,6 +57,14 @@ const router = createBrowserRouter([
       {
         path: '/saleItem',
         element: <SaleItemPage/>
+      },
+      {
+        path: '/expense',
+        element: <ExpensePage/>
+      },
+      {
+        path: '/accounts',
+        element: <AccountsPage/>
       },
     ]  
   },
