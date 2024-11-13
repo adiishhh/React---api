@@ -43,7 +43,7 @@ function Accounts() {
                 id: item.id, // Assuming each sale has a unique ID
                 debit: 0,
                 credit: item.total_amount, // Total amount from Sales
-                type: 'Sale',
+                type: item.type, // Use the type from Sales (Cash or Online)
             });
         });
     }
@@ -55,12 +55,17 @@ function Accounts() {
                 id: item.id, // Assuming each purchase has a unique ID
                 debit: item.buy, // Buy Price from Purchase
                 credit: 0,
-                type: 'Purchase',
+                type: item.type, // Use the type from Purchase (Cash or Online)
             });
         });
     }
 
     const columns = [
+        {
+            title: "ID",
+            key: "id",
+            dataIndex: "id",
+        },
         {
             title: 'Debit',
             dataIndex: 'debit',
