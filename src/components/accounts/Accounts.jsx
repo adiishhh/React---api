@@ -5,7 +5,6 @@ import { getSales } from "../../utils/sales/SalesApi";
 import { getPurchase } from "../../utils/purchase/PurchaseApi";
 
 function Accounts() {
-    // Fetch data from Expense, Sales, and Purchase APIs
     const { data: expenseData, refetch } = useQuery({
         queryKey: ['getExpense'],
         queryFn: getExpense,
@@ -21,41 +20,42 @@ function Accounts() {
         queryFn: getPurchase,
     });
 
-    // Prepare the data for the table
     const accountData = [];
 
-    // Add expenses to account data
+    // Process expense data
     if (Array.isArray(expenseData?.data)) {
         expenseData.data.forEach(item => {
             accountData.push({
-                id: item.id, // Assuming each expense has a unique ID
-                debit: item.amount, // Amount from Expense
+                id: item.id,
+                debit: item.amount, 
                 credit: 0,
                 type: 'Expense',
             });
         });
     }
 
-    // Add sales to account data
+    // Process sales data
     if (Array.isArray(salesData?.data)) {
         salesData.data.forEach(item => {
             accountData.push({
-                id: item.id, // Assuming each sale has a unique ID
+                id: item.id, 
                 debit: 0,
-                credit: item.total_amount, // Total amount from Sales
-                type: item.type, // Use the type from Sales (Cash or Online)
+                credit: item.total_amount,
+                type: item.type, 
             });
         });
     }
 
-    // Add purchases to account data
+    // Process purchase data
     if (Array.isArray(purchaseData?.data)) {
         purchaseData.data.forEach(item => {
+            // Calculate debit as buy price multiplied by quantity
+            const debitAmount = item.buy * item.quantity; // Ensure item.quantity is available
             accountData.push({
-                id: item.id, // Assuming each purchase has a unique ID
-                debit: item.buy, // Buy Price from Purchase
+                id: item.id, 
+                debit: debitAmount, // Use the calculated debit amount
                 credit: 0,
-                type: item.type, // Use the type from Purchase (Cash or Online)
+                type: item.type,
             });
         });
     }
@@ -88,7 +88,7 @@ function Accounts() {
 
     return (
         <div>
-            <Button onClick={() => { refetch }}>Refresh</Button>
+            <Button onClick={() => refetch()}>Refresh</Button>
             <Table 
                 columns={columns} 
                 dataSource={accountData} 
